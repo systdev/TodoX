@@ -61,8 +61,9 @@ class SystemTray:
         """创建右键菜单"""
         menu = pystray.Menu(
             pystray.MenuItem(
-                '显示主窗口',
-                self._show_window
+                '显示/隐藏窗口',
+                self._toggle_window,
+                default=True  # 双击图标时触发
             ),
             pystray.MenuItem(
                 '退出',
@@ -71,13 +72,28 @@ class SystemTray:
         )
         return menu
 
+    def _get_root_window(self):
+        """获取顶层窗口"""
+        window = self._main_window
+        while window and hasattr(window, 'master') and window.master:
+            window = window.master
+        return window
+
+    def _toggle_window(self, icon=None, item=None):
+        """切换窗口显示/隐藏"""
+        window = self._get_root_window()
+        if window:
+            if window.winfo_viewable():
+                window.withdraw()
+            else:
+                window.deiconify()
+                window.lift()
+                window.focus_force()
+
     def _show_window(self, icon=None, item=None):
         """显示主窗口"""
-        if self._main_window:
-            # 找到顶层窗口
-            window = self._main_window
-            while window.master:
-                window = window.master
+        window = self._get_root_window()
+        if window:
             window.deiconify()
             window.lift()
             window.focus_force()
